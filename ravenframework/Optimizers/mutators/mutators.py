@@ -203,7 +203,6 @@ def inversionMutator(offSprings, distDict, **kwargs):
 
   return offSprings
 
-
 __mutators = {}
 __mutators['swapMutator']       = swapMutator
 __mutators['scrambleMutator']   = scrambleMutator
