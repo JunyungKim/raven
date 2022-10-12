@@ -1,5 +1,4 @@
 [Tests]
-
   # gradients
   [./FiniteDifference]
     type = 'RavenPython'
@@ -7,9 +6,10 @@
   [../]
   
   # GAs
-  [./testRouletteWheel]
+  # Crossover Test
+  [./test1pointCrossover]
     type = 'RavenPython'
-    input = 'testRouletteWheel.py'
+    input = 'test1pointCrossover.py'
   [../]
   [./test2pointsCrossover]
     type = 'RavenPython'
@@ -18,6 +18,36 @@
   [./test2pointsCrossoverSmallArray]
     type = 'RavenPython'
     input = 'test2pointsCrossoverSmallArray.py'
+  [../]
+  [./testUniformCrossover]
+    type = 'RavenPython'
+    input = 'testUniformCrossover.py'
+  [../]
+  # Mutators Test
+  [./testSwapMutator]
+    type = 'RavenPython'
+    input = 'testSwapMutator.py'
+  [../]
+  [./testScrambleMutator]
+    type = 'RavenPython'
+    input = 'testScrambleMutator.py'
+  [../]
+  [./testBitFlipMutator]
+    type = 'RavenPython'
+    input = 'testBitFlipMutator.py'
+  [../]
+  [./testRandomMutator]
+    type = 'RavenPython'
+    input = 'testRandomMutator.py'
+  [../]
+  [./testInversionMutator]
+    type = 'RavenPython'
+    input = 'testInversionMutator.py'
+  [../]
+
+  [./testRouletteWheel]
+    type = 'RavenPython'
+    input = 'testRouletteWheel.py'
   [../]
   [./testTournamentSelection]
     type = 'RavenPython'
@@ -34,10 +64,5 @@
   [./testRankSelection]
     type = 'RavenPython'
     input = 'testRankSelection.py'
-  [../]
-  
-  [./test1pointCrossover]
-    type = 'RavenPython'
-    input = 'test1pointCrossover.py'
   [../]
 []
