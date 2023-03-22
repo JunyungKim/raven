@@ -108,6 +108,7 @@ class GeneticAlgorithm(RavenSampled):
     self._penaltyCoeff = None
     self._fitnessInstance = None
     self._repairInstance = None
+    self._canHandleMultiObjective = True
 
   ##########################
   # Initialization Methods #
@@ -451,7 +452,7 @@ class GeneticAlgorithm(RavenSampled):
     # 0.1 @ n-1: fitnessCalculation(rlz)
     # perform fitness calculation for newly obtained children (rlz)
 
-    if len(self._objectiveVar) == 1:  # This is a single-objective Optimization case
+    if not self._canHandleMultiObjective or len(self._objectiveVar) == 1:  # This is a single-objective Optimization case
       offSprings = datasetToDataArray(rlz, list(self.toBeSampled))
       objectiveVal = list(np.atleast_1d(rlz[self._objectiveVar[0]].data))
 
@@ -1243,8 +1244,8 @@ class GeneticAlgorithm(RavenSampled):
              'fitness': rlz['fitness'],
              'AHDp': self.ahdp,
              'AHD': self.ahd,
-             'rank': 0 if len(self._objectiveVar) == 1 else rlz['rank'],
-             'CD': 0 if len(self._objectiveVar) == 1 else  rlz['CD']}
+             'rank': 0 if ((type(self._objectiveVar) == list and len(self._objectiveVar) == 1) or type(self._objectiveVar) == str) else rlz['rank'],
+             'CD': 0 if ((type(self._objectiveVar) == list and len(self._objectiveVar) == 1) or type(self._objectiveVar) == str) else  rlz['CD']}
 
     for var, val in self.constants.items():
       toAdd[var] = val

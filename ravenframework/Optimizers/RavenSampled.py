@@ -301,11 +301,13 @@ class RavenSampled(Optimizer):
     # the sign of the objective function is flipped in case we do maximization
     # so get the correct-signed value into the realization
     if self._minMax == 'max':
-      if type(self._objectiveVar) == str:
-        rlz[self._objectiveVar] *= -1
-      else:
+      if not self._canHandleMultiObjective and len(self._objectiveVar) == 1:
+        rlz[self._objectiveVar[0]] *= -1
+      elif type(self._objectiveVar) == list:
         for i in range(len(self._objectiveVar)):
           rlz[self._objectiveVar[i]] *= -1
+      else:
+        rlz[self._objectiveVar] *= -1
     # TODO FIXME let normalizeData work on an xr.DataSet (batch) not just a dictionary!
     rlz = self.normalizeData(rlz)
     self._useRealization(info, rlz)
@@ -316,7 +318,7 @@ class RavenSampled(Optimizer):
       @ In, failedRuns, list, runs that failed as part of this sampling
       @ Out, None
     """
-    if type(self._objectiveVar) == str:
+    if not self._canHandleMultiObjective or len(self._objectiveVar) == 1:
       # get and print the best trajectory obtained
       bestValue = None
       bestTraj = None
@@ -715,8 +717,8 @@ class RavenSampled(Optimizer):
                      'rejectReason': rejectReason
                     })
     # optimal point input and output spaces
-    if type(self._objectiveVar) == str: # Single Objective Optimization
-      objValue = rlz[self._objectiveVar]
+    if len(self._objectiveVar) == 1: # Single Objective Optimization
+      objValue = rlz[self._objectiveVar[0]]
       if self._minMax == 'max':
         objValue *= -1
       toExport[self._objectiveVar[0]] = objValue
