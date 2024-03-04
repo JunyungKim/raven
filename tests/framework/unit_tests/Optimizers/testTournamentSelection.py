@@ -95,7 +95,9 @@ popFitness = xr.DataArray(popFitness,
                           dims=['chromosome'],
                           coords={'chromosome': np.arange(np.shape(popFitness)[0])})
 nParents = 2
-parents = tournamentSelection(population, variables=optVars, fitness=popFitness, nParents=nParents)
+objVal = [10]
+kSelection = 2
+parents = tournamentSelection(population, variables=optVars, fitness=popFitness, nParents=nParents, objVal=objVal, kSelection=kSelection)
 print('Roulette Wheel Parent Selection')
 print('*'*19)
 print('selected parents are: {}'.format(parents))

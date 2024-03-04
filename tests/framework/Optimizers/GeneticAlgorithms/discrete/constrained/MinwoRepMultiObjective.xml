@@ -9,7 +9,7 @@
   </TestInfo>
 
   <RunInfo>
-    <WorkingDir>Multi_MinwoReplacement_wo_constraints_min_max_min_50_20</WorkingDir>
+    <WorkingDir>Multi_MinwoReplacement</WorkingDir>
     <Sequence>optimize,print</Sequence>
     <batchSize>4</batchSize>
   </RunInfo>

@@ -59,13 +59,13 @@ def invLinear(rlz,**kwargs):
           the farthest from violating the constraint it is, The highest negative value it have the largest the violation is.
     @ Out, fitness, xr.DataArray, the fitness function of the given objective corresponding to a specific chromosome.
   """
-  a = [1.0] if kwargs['a'] == None else kwargs['a']
-  b = [10.0] if kwargs['b'] == None else kwargs['b']
+  a = [1.0] * len(objVar) if kwargs['a'] == None else kwargs['a']
+  b = [10.0] * len(objVar) if kwargs['b'] == None else kwargs['b']
   penalty = 0.0 if kwargs['constraintFunction'].all() == None  else kwargs['constraintFunction'].data
   objVar = [kwargs['objVar']] if isinstance(kwargs['objVar'], str) == True else kwargs['objVar']
   for j in range(len(objVar)):
     data = np.atleast_1d(rlz[objVar][objVar[j]].data)
-    fitness = -a[0] * (rlz[objVar][objVar[j]].data).reshape(-1,1) - b[0] * np.sum(np.maximum(0,-penalty),axis=-1).reshape(-1,1)
+    fitness = -a[j] * (rlz[objVar][objVar[j]].data).reshape(-1,1) - b[j] * np.sum(np.maximum(0,-penalty),axis=-1).reshape(-1,1)
     fitness = xr.DataArray(np.squeeze(fitness),
                           dims=['chromosome'],
                           coords={'chromosome': np.arange(len(data))})
@@ -109,7 +109,7 @@ def feasibleFirst(rlz,**kwargs):
     @ Out, fitness, xr.DataArray, the fitness function of the given objective corresponding to a specific chromosome.
   """
   objVar = [kwargs['objVar']] if isinstance(kwargs['objVar'], str) == True else kwargs['objVar']
-  a = 1.0 if kwargs['a'] == None else kwargs['a']
+  a = [1.0]*len(objVar) if kwargs['a'] == None else kwargs['a']
   if kwargs['constraintNum'] == 0:
     pen = kwargs['b']
   else:

@@ -456,7 +456,7 @@ class GeneticAlgorithm(RavenSampled):
     if self._fitnessType == 'feasibleFirst':
       if self._numOfConst != 0 and fitnessNode.findFirst('b') is not None:
         self._penaltyCoeff = fitnessNode.findFirst('b').value
-        self._objCoeff = fitnessNode.findFirst('a').value 
+        self._objCoeff = fitnessNode.findFirst('a').value if fitnessNode.findFirst('a') is not None else None
       elif self._numOfConst == 0 and fitnessNode.findFirst('b') is not None:
         self.raiseAnError(IOError, f'The number of constraints used are 0 but there are penalty coefficieints')
       elif self._numOfConst != 0 and fitnessNode.findFirst('b') is None:
@@ -721,7 +721,7 @@ class GeneticAlgorithm(RavenSampled):
     # 0 @ n-1: Survivor Selection from previous iteration (children+parents merging from previous generation)
     # 0.1 @ n-1: fitnessCalculation(rlz): Perform fitness calculation for newly obtained children (rlz)
     
-    objInd = 1 if len(self._objectiveVar) == 1 else 2
+    objInd = int(len(self._objectiveVar)>1) + 1 #if len(self._objectiveVar) == 1 else 2
     constraintFuncs: dict = {1: GeneticAlgorithm.singleConstraint, 2: GeneticAlgorithm.multiConstraint}
     const = constraintFuncs.get(objInd, GeneticAlgorithm.singleConstraint)
     traj, g, objectiveVal, offSprings, offSpringFitness = const(self, info, rlz)

@@ -103,11 +103,11 @@ def fitnessBased(newRlz,**kwargs):
     popAge = kwargs['age']
 
   offSpringsFitness = datasetToDataArray(kwargs['offSpringsFitness'], list(kwargs['offSpringsFitness'].keys())).data
-  offSpringsFitness = np.array([item for sublist in offSpringsFitness for item in sublist])
+  # offSpringsFitness = np.array([item for sublist in offSpringsFitness for item in sublist])
   offSprings = np.atleast_2d(newRlz[kwargs['variables']].to_array().transpose().data)
   population = np.atleast_2d(kwargs['population'].data)
-  popFitness = datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data
-  popFitness = np.array([item for sublist in popFitness for item in sublist])
+  popFitness = np.array(kwargs['fitness'].data) #datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data
+  # popFitness = np.array([item for sublist in popFitness for item in sublist])
   newPopulation = population
   newFitness = popFitness
   newAge = list(map(lambda x:x+1, popAge))
@@ -129,7 +129,7 @@ def fitnessBased(newRlz,**kwargs):
   newFitness = xr.DataArray(newFitness,
                             dims=['chromosome'],
                             coords={'chromosome':np.arange(np.shape(newFitness)[0])})
-  newFitness = newFitness.to_dataset(name = list(kwargs['fitness'].keys())[0])
+  newFitness = newFitness.to_dataset(name = list(kwargs['variables'])[0])
 
   #return newPopulationArray,newFitness,newAge
   return newPopulationArray,newFitness,newAge,kwargs['popObjectiveVal']
