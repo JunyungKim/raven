@@ -262,7 +262,7 @@ class SimulateData:
         spot = elems.index('Max-3PIN')
         list_.append(float(elems[spot+1]))
 
-    print(f"This is Fq={max(list_)}")
+    # print(f"This is Fq={max(list_)}")
 
     if not list_:
       return ValueError("No values returned. Check Simulate File executed correctly")
@@ -604,8 +604,8 @@ class SimulateData:
           elems = line.strip().split()
           spot = elems.index("EBAR")
           list_.append(float(elems[spot+1]))
-    print(list_)
-    print(list_[-1])
+    # print(list_)
+    # print(list_[-1])
     if not list_:
       return ValueError("No values returned. Check Simulate file executed correctly.")
     else:

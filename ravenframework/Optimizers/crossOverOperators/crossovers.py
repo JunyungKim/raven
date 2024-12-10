@@ -155,6 +155,26 @@ def twoPointsCrossover(parents, **kwargs):
 
   return children
 
+def getLinearCrossoverProbability(iter, limit):
+  """
+  This method is designed to ILC(Increasing Low Crossover) adaptive crossover methodology each iteration with probability.
+  @ In, Current iteration number, Total iteration number
+  @ Out, (iteration / limit) as crossover rate
+  """
+  return iter/limit
+
+def getQuadraticCrossoverProbability(iter, limit):
+  """
+  This method is designed to quadratic adaptive crossover methodology each iteration with probability.
+  @ In, Current iteration number, Total iteration number
+  @ Out,  (iteration+1/limit)^2 as crossover rate
+  """
+  if(iter == 0):
+    crossoverProb = 0
+  else:
+    crossoverProb = ((iter+1)/(limit))**2
+  return crossoverProb
+
 def partiallyMappedCrossover(parents, **kwargs):
   """
     Method designed to perform a two point partially mapped crossover (MPX) on 2 parents:
