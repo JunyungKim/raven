@@ -43,18 +43,30 @@ def onePointCrossover(parents,**kwargs):
   children = xr.DataArray(np.zeros((int(2*comb(nParents,2)),nGenes)),
                           dims=['chromosome','Gene'],
                           coords={'chromosome': np.arange(int(2*comb(nParents,2))),
-                                  'Gene':kwargs['variables']})
+                                  'Gene':parents.coords['Gene']})
+  avgFitness = np.mean(parents.data[:,-1])
+  maxFitness = np.max(parents.data[:,-1])
+  parentsPairs = list(combinations(parents,2))
 
+  # p_c_max = 0.9
+  # for i in range(len(parentsPairs)):
+  #   if parentsPairs[i][0].data[-1] >= avgFitness:
+  #     crossoverProb = p_c_max-p_c_max*np.exp(-0.382)*((parentsPairs[i][0].data[-1] - avgFitness)/maxFitness-avgFitness)
+  #   else:
+  #     crossoverProb = p_c_max
 
   # defaults
   if (kwargs['crossoverProb'] == None) or ('crossoverProb' not in kwargs.keys()):
     crossoverProb = randomUtils.random(dim=1, samples=1)
   else:
-    crossoverProb = kwargs['crossoverProb']
+    p_c_max = kwargs['crossoverProb']
+    for i in range(len(parentsPairs)):
+      if np.max([parentsPairs[i][0].data[-1], parentsPairs[i][1].data[-1]]) >= avgFitness:
+        crossoverProb = p_c_max-p_c_max*np.exp(-0.382)*((np.max([parentsPairs[i][0].data[-1], parentsPairs[i][1].data[-1]]) - avgFitness)/(maxFitness-avgFitness))
+      else:
+        crossoverProb = kwargs['crossoverProb']
 
   # create children
-  parentsPairs = list(combinations(parents,2))
-
   for ind,parent in enumerate(parentsPairs):
     parent = np.array(parent).reshape(2,-1) # two parents at a time
 
@@ -72,6 +84,12 @@ def onePointCrossover(parents,**kwargs):
     else:
       # Each child is just a copy of the parents
       children[2*ind:2*ind+2,:] = parent
+
+  # remove fitness values in children
+  children = xr.DataArray(children.data[:,:-1],
+                          dims=['chromosome','Gene'],
+                          coords={'chromosome': np.arange(np.shape(children)[0]),
+                                  'Gene': parents.coords['Gene'][:-1]})
 
   return children
 

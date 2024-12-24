@@ -924,7 +924,7 @@ class GeneticAlgorithm(RavenSampled):
     traj, g, objectiveVal, offSprings, offSpringFitness = const(self, info, rlz)
 
 
-    # 0.2@ n-1: Survivor selection(rlz): Update population container given obtained children
+      # 0.2@ n-1: Survivor selection(rlz): Update population container given obtained children
     if self._activeTraj:
       survivorSelectionFuncs: dict = {1: survivorSelectionProcess.singleObjSurvivorSelect, 2: survivorSelectionProcess.multiObjSurvivorSelect}
       survivorSelection = survivorSelectionFuncs.get(objInd, survivorSelectionProcess.singleObjSurvivorSelect)
@@ -932,15 +932,15 @@ class GeneticAlgorithm(RavenSampled):
 
       # 1 @ n: Parent selection from population
       # Pair parents together by indexes
-      parents = self._parentSelectionInstance(self.population,
-                                              variables=list(self.toBeSampled),
-                                              fitness = self.fitness,
-                                              kSelection = self._kSelection,
-                                              nParents=self._nParents,
-                                              rank = self.rank,
-                                              crowdDistance = self.crowdingDistance,
-                                              objVal = self._objectiveVar
-                                              )
+      parents, parentsToNextGen = self._parentSelectionInstance(self.population,
+                                                               variables=list(self.toBeSampled),
+                                                               fitness = self.fitness,
+                                                               kSelection = self._kSelection,
+                                                               nParents=self._nParents,
+                                                               rank = self.rank,
+                                                               crowdDistance = self.crowdingDistance,
+                                                               objVal = self._objectiveVar
+                                                               )
 
     # 2 @ n: Crossover from set of parents
     # Create childrenCoordinates (x1,...,xM)
@@ -954,9 +954,9 @@ class GeneticAlgorithm(RavenSampled):
       else:
         self.raiseAnError(IOError, "{} is not implemeted!. Currently only 'linear' and 'quadratic' are implemented".format(self._crossoverProb))
       childrenXover = self._crossoverInstance(parents=parents,
-                                                variables=list(self.toBeSampled),
-                                                crossoverProb=crossoverProb,
-                                                points=self._crossoverPoints)
+                                              variables=list(self.toBeSampled),
+                                              crossoverProb=crossoverProb,
+                                              points=self._crossoverPoints)
 
         # 3 @ n: Mutation
         # Perform random directly on childrenCoordinates
@@ -969,10 +969,10 @@ class GeneticAlgorithm(RavenSampled):
       else:
         self.raiseAnError(IOError, "{} is not implemeted!. Currently only 'linear' and 'quadratic' are implemented".format(self._mutationProb))
       childrenMutated = self._mutationInstance(offSprings=childrenXover,
-                                                distDict=self.distDict,
-                                                locs=self._mutationLocs,
-                                                mutationProb=mutationProb,
-                                                variables=list(self.toBeSampled))
+                                               distDict=self.distDict,
+                                               locs=self._mutationLocs,
+                                               mutationProb=mutationProb,
+                                               variables=list(self.toBeSampled))
       # 4 @ n: repair/replacement
       # Repair should only happen if multiple genes in a single chromosome have the same values (),
       # and at the same time the sampling of these genes should be with Out replacement.
@@ -989,13 +989,43 @@ class GeneticAlgorithm(RavenSampled):
       else:
         children = childrenMutated
 
-      # keeping the population size constant by ignoring the excessive children
-      children = children[:self._populationSize, :]
+      # Make sure no child is exactly same to his/her parents
+      flag = True
+      counter = 0
+      while flag and counter < self._populationSize:
+        counter += 1
+        repeated =[]
+        for i in range(np.shape(self.population.data)[0]):
+          for j in range(i,np.shape(children.data)[0]):
+            if all(self.population.data[i,:]==children.data[j,:]):
+              repeated.append(j)
+        repeated = list(set(repeated))
+        if repeated:
+          newChildren = self._mutationInstance(offSprings=children[repeated,:],
+                                               distDict=self.distDict,
+                                               locs=self._mutationLocs,
+                                               mutationProb=mutationProb,
+                                               variables=list(self.toBeSampled))
+          children.data[repeated,:] = newChildren.data
+        else:
+          flag = False
 
-      daChildren = xr.DataArray(children,
+      # Concatenate parentsToNextGen and children
+      concate = np.concatenate((parentsToNextGen.data, children.data), axis=0)
+
+      daChildren = xr.DataArray(concate,
                                 dims=['chromosome','Gene'],
-                                coords={'chromosome': np.arange(np.shape(children)[0]),
-                                        'Gene':list(self.toBeSampled)})
+                                coords={'chromosome': np.arange(np.shape(concate)[0]),
+                                        'Gene': children.coords['Gene']})
+
+      # keeping the population size constant by ignoring the excessive children
+      daChildren = daChildren[:self._populationSize, :]
+
+      # daChildren = xr.DataArray(children,
+      #                           dims=['chromosome','Gene'],
+      #                           coords={'chromosome': np.arange(np.shape(children)[0]),
+      #                                   'Gene':list(self.toBeSampled)})
+
 
       # 5 @ n: Submit children batch
       # Submit children coordinates (x1,...,xm), i.e., self.childrenCoordinates

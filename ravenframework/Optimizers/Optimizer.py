@@ -435,9 +435,18 @@ class Optimizer(AdaptiveSampler):
       self._initSampler.generateInput(None, None)
       rlz = self._initSampler.inputInfo['SampledVars']
       # NOTE by looping over self.toBeSampled, we could potentially not error out when extra vars are sampled
-      for var in self.toBeSampled:
-        if var in rlz:
-          self._initialValues[n][var] = rlz[var] # TODO float or np.1darray?
+      if self.batchId == 0:
+        for var in self.toBeSampled:
+          if var in self._initialValues[n]:
+            pass
+          else:
+            self.raiseAnError(IOError, f'{numTraj} Error! - This Error Message needs to be fixed later. ')
+      else:
+        for var in self.toBeSampled:
+          if var in rlz:
+            self._initialValues[n][var] = rlz[var] # TODO float or np.1darray?  
+          else:
+            self.raiseAnError(IOError, f'{numTraj} Error! - This Error Message needs to be fixed later. ')
 
   def initializeTrajectory(self, traj=None):
     """
