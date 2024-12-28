@@ -630,8 +630,8 @@ class GeneticAlgorithm(RavenSampled):
     ####################################################################################
     crossoverNode = reproductionNode.findFirst('crossover')
     self._crossoverType = crossoverNode.parameterValues['type']
-    if self._crossoverType not in ['onePointCrossover','twoPointsCrossover','uniformCrossover','partiallyMappedCrossover']:
-      self.raiseAnError(IOError, f'Currently constrained Genetic Algorithms only support onePointCrossover, twoPointsCrossover, uniformCrossover and partiallyMappedCrossover as a crossover, whereas provided crossover is {self._crossoverType}')
+    if self._crossoverType not in ['onePointCrossover','twoPointsCrossover','uniformCrossover']:
+      self.raiseAnError(IOError, f'Currently constrained Genetic Algorithms only support onePointCrossover, twoPointsCrossover and uniformCrossover as a crossover, whereas provided crossover is {self._crossoverType}')
     if crossoverNode.findFirst('points') is None:
       self._crossoverPoints = None
     else:
@@ -923,6 +923,9 @@ class GeneticAlgorithm(RavenSampled):
     const = constraintFuncs.get(objInd, GeneticAlgorithm.singleObjectiveConstraintHandling)
     traj, g, objectiveVal, offSprings, offSpringFitness = const(self, info, rlz)
 
+    ### NOTE #################################################################################################################
+    ### Optimization stops here when it reaches to the maximum allowable number of iteration #################################
+    ##########################################################################################################################
 
     # 0.2@ n-1: Survivor selection(rlz): Update population container given obtained children
     if self._activeTraj:
@@ -932,19 +935,19 @@ class GeneticAlgorithm(RavenSampled):
 
       # 1 @ n: Parent selection from population
       # Pair parents together by indexes
-      parents = self._parentSelectionInstance(self.population,
-                                              variables=list(self.toBeSampled),
-                                              fitness = self.fitness,
-                                              kSelection = self._kSelection,
-                                              nParents=self._nParents,
-                                              rank = self.rank,
-                                              crowdDistance = self.crowdingDistance,
-                                              objVal = self._objectiveVar
-                                              )
+      parents, parentsToNextGen = self._parentSelectionInstance(self.population,
+                                                                variables=list(self.toBeSampled),
+                                                                fitness = self.fitness,
+                                                                kSelection = self._kSelection,
+                                                                nParents=self._nParents,
+                                                                rank = self.rank,
+                                                                crowdDistance = self.crowdingDistance,
+                                                                objVal = self._objectiveVar
+                                                                )
 
-      # 2 @ n: Crossover from set of parents
-      # Create childrenCoordinates (x1,...,xM)
-      # if crossover probability is a float, keep it as is. But, If it's a string, called appropriate function.
+    # 2 @ n: Crossover from set of parents
+    # Create childrenCoordinates (x1,...,xM)
+    # if crossover probability is a float, keep it as is. But, If it's a string, called appropriate function.
       if(self._crossoverProbType == "static"):
         crossoverProb = self._crossoverProb
       elif(self._crossoverProb.lower() == "linear"):
@@ -954,12 +957,12 @@ class GeneticAlgorithm(RavenSampled):
       else:
         self.raiseAnError(IOError, "{} is not implemeted!. Currently only 'linear' and 'quadratic' are implemented".format(self._crossoverProb))
       childrenXover = self._crossoverInstance(parents=parents,
-                                                variables=list(self.toBeSampled),
-                                                crossoverProb=crossoverProb,
-                                                points=self._crossoverPoints)
+                                              variables=list(self.toBeSampled),
+                                              crossoverProb=crossoverProb,
+                                              points=self._crossoverPoints)
 
-      # 3 @ n: Mutation
-      # Perform random directly on childrenCoordinates
+        # 3 @ n: Mutation
+        # Perform random directly on childrenCoordinates
       if(self._mutationProbType == "static"):
         mutationProb = self._mutationProb
       elif(self._mutationProb == "linear"):
@@ -969,10 +972,10 @@ class GeneticAlgorithm(RavenSampled):
       else:
         self.raiseAnError(IOError, "{} is not implemeted!. Currently only 'linear' and 'quadratic' are implemented".format(self._mutationProb))
       childrenMutated = self._mutationInstance(offSprings=childrenXover,
-                                                distDict=self.distDict,
-                                                locs=self._mutationLocs,
-                                                mutationProb=mutationProb,
-                                                variables=list(self.toBeSampled))
+                                               distDict=self.distDict,
+                                               locs=self._mutationLocs,
+                                               mutationProb=mutationProb,
+                                               variables=list(self.toBeSampled))
       # 4 @ n: repair/replacement
       # Repair should only happen if multiple genes in a single chromosome have the same values (),
       # and at the same time the sampling of these genes should be with Out replacement.
@@ -988,6 +991,7 @@ class GeneticAlgorithm(RavenSampled):
         children = self._repairInstance(childrenMutated,variables=list(self.toBeSampled),distInfo=self.distDict)
       else:
         children = childrenMutated
+
       # Make sure no child is exactly same to his/her parents
       flag = True
       counter = 0
@@ -1003,19 +1007,51 @@ class GeneticAlgorithm(RavenSampled):
           newChildren = self._mutationInstance(offSprings=children[repeated,:],
                                                distDict=self.distDict,
                                                locs=self._mutationLocs,
-                                               mutationProb=mutationProb,
+                                               mutationProb=1, # @JunyungKim: In order to make them 100% differnt from their parents population, mutation Prob. is set to 1. 
                                                variables=list(self.toBeSampled))
           children.data[repeated,:] = newChildren.data
         else:
           flag = False
 
-      # keeping the population size constant by ignoring the excessive children
-      children = children[:self._populationSize, :]
+      # Make sure there are no same children
+      childrenCopy = children
+      flag = True
+      counter = 0
+      while flag and counter < self._populationSize:
+        counter += 1
+        repeated =[]
+        for i in range(np.shape(childrenCopy.data)[0]):
+          for j in range(i,np.shape(children.data)[0]):
+            if all(childrenCopy.data[i,:]==children.data[j,:]):
+              repeated.append(j)
+        repeated = list(set(repeated))
+        if repeated:
+          newChildren = self._mutationInstance(offSprings=children[repeated,:],
+                                               distDict=self.distDict,
+                                               locs=self._mutationLocs,
+                                               mutationProb=1, # @JunyungKim: In order to make them 100% differnt from their parents population, mutation Prob. is set to 1. 
+                                               variables=list(self.toBeSampled))
+          children.data[repeated,:] = newChildren.data
+        else:
+          flag = False
 
-      daChildren = xr.DataArray(children,
+
+      # Concatenate parentsToNextGen and children
+      concate = np.concatenate((parentsToNextGen.data, children.data), axis=0)
+
+      daChildren = xr.DataArray(concate,
                                 dims=['chromosome','Gene'],
-                                coords={'chromosome': np.arange(np.shape(children)[0]),
-                                        'Gene':list(self.toBeSampled)})
+                                coords={'chromosome': np.arange(np.shape(concate)[0]),
+                                        'Gene': children.coords['Gene']})
+
+      # keeping the population size constant by ignoring the excessive children
+      daChildren = daChildren[:self._populationSize, :]
+
+      # daChildren = xr.DataArray(children,
+      #                           dims=['chromosome','Gene'],
+      #                           coords={'chromosome': np.arange(np.shape(children)[0]),
+      #                                   'Gene':list(self.toBeSampled)})
+
 
       # 5 @ n: Submit children batch
       # Submit children coordinates (x1,...,xm), i.e., self.childrenCoordinates

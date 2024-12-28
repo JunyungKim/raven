@@ -27,6 +27,7 @@ import numpy as np
 import xarray as xr
 from operator import itemgetter
 from ...utils import utils, randomUtils
+import math
 
 def swapMutator(offSprings, distDict, **kwargs):
   """
@@ -40,11 +41,20 @@ def swapMutator(offSprings, distDict, **kwargs):
           variables, list, variables names.
     @ Out, children, xr.DataArray, the mutated chromosome, i.e., the child.
   """
-  if kwargs['locs'] == None:
-    locs = list(set(randomUtils.randomChoice(list(np.arange(offSprings.data.shape[1])),size=2,replace=False)))
-    loc1 = np.minimum(locs[0], locs[1])
-    loc2 = np.maximum(locs[0], locs[1])
+  NumOfMutatedGenes = math.ceil(len(offSprings['Gene']) * np.min([kwargs['mutationProb'],0.8]))   #@JunyungKim - the Number of mutated Genes is influenced by mutation probability. 0.8 is used only if mutationProb is bigger than 0.8. 
+  if NumOfMutatedGenes%2 == 0:
+    pass
   else:
+    NumOfMutatedGenes = NumOfMutatedGenes - 1
+  if kwargs['locs'] == None:
+    locsOrigin = randomUtils.randomChoice(list(np.arange(offSprings.data.shape[1])),size=NumOfMutatedGenes,replace=False)
+    locsTotal = [locsOrigin[i:i + 2] for i in range(0, len(locsOrigin), 2)]
+    locsTotal = [sorted(sublist) for sublist in locsTotal]
+    # for i in len(locsTotal):
+    #   loc1 = np.minimum(locs[0], locs[1])
+    #   loc2 = np.maximum(locs[0], locs[1])
+  else:
+    #TODO this "else" part needs to be fixed later. 
     loc1 = np.minimum(kwargs['locs'][0], kwargs['locs'][1])
     loc2 = np.maximum(kwargs['locs'][0], kwargs['locs'][1])
 
@@ -55,13 +65,15 @@ def swapMutator(offSprings, distDict, **kwargs):
                                   'Gene':kwargs['variables']})
   for i in range(np.shape(offSprings)[0]):
     children[i] = offSprings[i]
-    ## TODO What happens if loc1 or 2 is out of range?! should we raise an error?
-    if randomUtils.random(dim=1,samples=1)<=kwargs['mutationProb']:
-      # convert loc1 and loc2 in terms on cdf values
-      cdf1 = distDict[offSprings.coords['Gene'].values[loc1]].cdf(float(offSprings[i,loc1].values))
-      cdf2 = distDict[offSprings.coords['Gene'].values[loc2]].cdf(float(offSprings[i,loc2].values))
-      children[i,loc1] = distDict[offSprings.coords['Gene'].values[loc1]].ppf(cdf2)
-      children[i,loc2] = distDict[offSprings.coords['Gene'].values[loc2]].ppf(cdf1)
+    for j in range(len(locsTotal)):
+      loc1 = locsTotal[j][0]
+      loc2 = locsTotal[j][1]
+      if randomUtils.random(dim=1,samples=1)<=kwargs['mutationProb']:
+        # convert loc1 and loc2 in terms on cdf values
+        cdf1 = distDict[offSprings.coords['Gene'].values[loc1]].cdf(float(offSprings[i,loc1].values))
+        cdf2 = distDict[offSprings.coords['Gene'].values[loc2]].cdf(float(offSprings[i,loc2].values))
+        children[i,loc1] = distDict[offSprings.coords['Gene'].values[loc1]].ppf(cdf2)
+        children[i,loc2] = distDict[offSprings.coords['Gene'].values[loc2]].ppf(cdf1)
   return children
 
 # @profile
@@ -145,15 +157,16 @@ def randomMutator(offSprings, distDict, **kwargs):
     raise ValueError('Locs arguments are not being used by randomMutator')
   for child in offSprings:
     # the mutation is performed for each child independently
-    if randomUtils.random(dim=1,samples=1)<kwargs['mutationProb']:
-      # sample gene location to be flipped: i.e., determine loc
-      chromosomeSize = child.values.shape[0]
-      loc = randomUtils.randomIntegers(0, chromosomeSize, caller=None, engine=None)
-      # gene at location loc is flipped from current value to newValue
-      geneIDToBeChanged = child.coords['Gene'].values[loc-1]
-      newCDFValue = randomUtils.random()
-      newValue = distDict[geneIDToBeChanged].ppf(newCDFValue)
-      child.values[loc-1] = newValue
+    for i, gene in enumerate(child['Gene']):      
+      if randomUtils.random(dim=1,samples=1) < kwargs['mutationProb']:
+        # sample gene location to be flipped: i.e., determine loc
+        # chromosomeSize = child.values.shape[0]
+        # loc = randomUtils.randomIntegers(0, chromosomeSize, caller=None, engine=None)
+        # gene at location loc is flipped from current value to newValue
+        geneIDToBeChanged = gene.item()
+        newCDFValue = randomUtils.random()
+        newValue = distDict[geneIDToBeChanged].ppf(newCDFValue)
+        child.values[i] = newValue
   return offSprings
 
 def inversionMutator(offSprings, distDict, **kwargs):

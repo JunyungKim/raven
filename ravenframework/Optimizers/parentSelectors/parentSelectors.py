@@ -25,6 +25,7 @@
 import numpy as np
 import xarray as xr
 from ...utils import randomUtils
+import math
 # External Modules----------------------------------------------------------------------------------
 
 # Internal Modules----------------------------------------------------------------------------------
@@ -45,9 +46,56 @@ def rouletteWheel(population,**kwargs):
           nParents, int, number of required parents.
     @ Out, selectedParents, xr.DataArray, selected parents, i.e. np.shape(selectedParents) = nParents x nGenes.
   """
+  # # Arguments
+  # pop = population
+  # fitness = np.array([item for sublist in datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data for item in sublist])
+  # # fitness = kwargs['fitness'].data
+  # nParents= kwargs['nParents']
+  # # if nparents = population size then do nothing (whole population are parents)
+  # if nParents == pop.shape[0]:
+  #   return population
+  # elif nParents > pop.shape[0]:
+  #   raise IOError('Number of parents is greater than population size')
+  # # begin the roulette selection algorithm
+  # selectedParent = xr.DataArray(
+  #       np.zeros((nParents,np.shape(pop)[1])),
+  #       dims=['chromosome','Gene'],
+  #       coords={'chromosome':np.arange(nParents),
+  #               'Gene': kwargs['variables']})
+  # # imagine a wheel that is partitioned according to the selection probabilities
+
+  # for i in range(nParents):
+  #   # set a random pointer
+  #   roulettePointer = randomUtils.random(dim=1, samples=1)
+  #   # initialize Probability
+  #   counter = 0
+  #   if np.all(fitness>=0) or np.all(fitness<=0):
+  #     selectionProb = fitness/np.sum(fitness) # Share of the pie (rouletteWheel)
+  #   else:
+  #     # shift the fitness to be all positive
+  #     shiftedFitness = fitness + abs(min(fitness))
+  #     selectionProb = shiftedFitness/np.sum(shiftedFitness) # Share of the pie (rouletteWheel)
+  #   sumProb = selectionProb[counter]
+
+  #   while sumProb <= roulettePointer :
+  #     counter += 1
+  #     sumProb += selectionProb[counter]
+  #   selectedParent[i,:] = pop.values[counter,:]
+  #   pop = np.delete(pop, counter, axis=0)
+  #   fitness = np.delete(fitness,counter,axis=0)
+  # return selectedParent
+
+  # Updated Code in order to make selectedParent Contain the fitness values. 
   # Arguments
   pop = population
   fitness = np.array([item for sublist in datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data for item in sublist])
+  fitnessIDX = np.arange(len(fitness))
+  ParentToNextGen = pop[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)/20)]] # top 5% of chromosomes in the population will be passed to next iteration.
+
+  fitnessXarray = kwargs['fitness'].to_dataarray().squeeze(dim='variable')
+  fitnessXarray_expanded = fitnessXarray.expand_dims(dim={'Gene': ['fitness']})
+  pop_expanded = xr.concat([pop, fitnessXarray_expanded], dim='Gene')
+
   # fitness = kwargs['fitness'].data
   nParents= kwargs['nParents']
   # if nparents = population size then do nothing (whole population are parents)
@@ -56,11 +104,10 @@ def rouletteWheel(population,**kwargs):
   elif nParents > pop.shape[0]:
     raise IOError('Number of parents is greater than population size')
   # begin the roulette selection algorithm
-  selectedParent = xr.DataArray(
-        np.zeros((nParents,np.shape(pop)[1])),
-        dims=['chromosome','Gene'],
-        coords={'chromosome':np.arange(nParents),
-                'Gene': kwargs['variables']})
+  selectedParentforXr = xr.DataArray(np.zeros((nParents,np.shape(pop_expanded)[1])),
+                                dims=['chromosome','Gene'],
+                                coords={'chromosome':np.arange(nParents),
+                                        'Gene': pop_expanded.coords['Gene']})
   # imagine a wheel that is partitioned according to the selection probabilities
 
   for i in range(nParents):
@@ -79,10 +126,10 @@ def rouletteWheel(population,**kwargs):
     while sumProb <= roulettePointer :
       counter += 1
       sumProb += selectionProb[counter]
-    selectedParent[i,:] = pop.values[counter,:]
-    pop = np.delete(pop, counter, axis=0)
+    selectedParentforXr[i,:] = pop_expanded.values[counter,:]
+    pop = np.delete(pop_expanded, counter, axis=0)
     fitness = np.delete(fitness,counter,axis=0)
-  return selectedParent
+  return selectedParentforXr, ParentToNextGen
 
 def countConstViolation(const):
   """
