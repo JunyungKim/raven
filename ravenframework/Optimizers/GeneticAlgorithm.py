@@ -1014,26 +1014,26 @@ class GeneticAlgorithm(RavenSampled):
           flag = False
 
       # Make sure there are no same children
-      childrenCopy = children
-      flag = True
-      counter = 0
-      while flag and counter < self._populationSize:
-        counter += 1
-        repeated =[]
-        for i in range(np.shape(childrenCopy.data)[0]):
-          for j in range(i,np.shape(children.data)[0]):
-            if all(childrenCopy.data[i,:]==children.data[j,:]):
-              repeated.append(j)
-        repeated = list(set(repeated))
-        if repeated:
-          newChildren = self._mutationInstance(offSprings=children[repeated,:],
-                                               distDict=self.distDict,
-                                               locs=self._mutationLocs,
-                                               mutationProb=1, # @JunyungKim: In order to make them 100% differnt from their parents population, mutation Prob. is set to 1. 
-                                               variables=list(self.toBeSampled))
-          children.data[repeated,:] = newChildren.data
-        else:
-          flag = False
+      # childrenCopy = children
+      # flag = True
+      # counter = 0
+      # while flag and counter < self._populationSize:
+      #   counter += 1
+      #   repeated =[]
+      #   for i in range(np.shape(childrenCopy.data)[0]):
+      #     for j in range(i,np.shape(children.data)[0]):
+      #       if all(childrenCopy.data[i,:]==children.data[j,:]):
+      #         repeated.append(j)
+      #   repeated = list(set(repeated))
+      #   if repeated:
+      #     newChildren = self._mutationInstance(offSprings=children[repeated,:],
+      #                                          distDict=self.distDict,
+      #                                          locs=self._mutationLocs,
+      #                                          mutationProb=1, # @JunyungKim: In order to make them 100% differnt from their parents population, mutation Prob. is set to 1. 
+      #                                          variables=list(self.toBeSampled))
+      #     children.data[repeated,:] = newChildren.data
+      #   else:
+      #     flag = False
 
 
       # Concatenate parentsToNextGen and children
