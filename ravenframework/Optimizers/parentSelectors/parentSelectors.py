@@ -90,7 +90,7 @@ def rouletteWheel(population,**kwargs):
   pop = population
   fitness = np.array([item for sublist in datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data for item in sublist])
   fitnessIDX = np.arange(len(fitness))
-  ParentToNextGen = pop[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)/10)]] # top 10% of chromosomes in the population will be passed to next iteration.
+  ParentToNextGen = pop[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)/5)]] # top 20% of chromosomes in the population will be passed to next iteration.
 
   fitnessXarray = kwargs['fitness'].to_dataarray().squeeze(dim='variable')
   fitnessXarray_expanded = fitnessXarray.expand_dims(dim={'Gene': ['fitness']})

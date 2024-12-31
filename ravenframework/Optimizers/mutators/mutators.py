@@ -157,7 +157,7 @@ def randomMutator(offSprings, distDict, **kwargs):
     raise ValueError('Locs arguments are not being used by randomMutator')
   for child in offSprings:
     # the mutation is performed for each child independently
-    for i, gene in enumerate(child['Gene']):      
+    for i, gene in enumerate(child['Gene'][:-1]):      
       if randomUtils.random(dim=1,samples=1) < kwargs['mutationProb']:
         # sample gene location to be flipped: i.e., determine loc
         # chromosomeSize = child.values.shape[0]
@@ -168,6 +168,30 @@ def randomMutator(offSprings, distDict, **kwargs):
         newValue = distDict[geneIDToBeChanged].ppf(newCDFValue)
         child.values[i] = newValue
   return offSprings
+
+# def randomMutator(offSprings, distDict, **kwargs):
+#   """
+#     This method is designed to randomly mutate a single gene in each chromosome with probability = mutationProb.
+#     @ In, offSprings, xr.DataArray, children resulting from the crossover process
+#     @ In, distDict, dict, dictionary containing distribution associated with each gene
+#     @ In, kwargs, dict, dictionary of parameters for this mutation method:
+#           mutationProb, float, probability that governs the mutation process, i.e., if prob < random number, then the mutation will occur
+#     @ Out, offSprings, xr.DataArray, children resulting from the crossover process
+#   """
+#   if kwargs['locs'] is not None and 'locs' in kwargs.keys():
+#     raise ValueError('Locs arguments are not being used by randomMutator')
+#   for child in offSprings:
+#     # the mutation is performed for each child independently
+#     if randomUtils.random(dim=1,samples=1)<kwargs['mutationProb']:
+#       # sample gene location to be flipped: i.e., determine loc
+#       chromosomeSize = child.values.shape[0]
+#       loc = randomUtils.randomIntegers(0, chromosomeSize, caller=None, engine=None)
+#       # gene at location loc is flipped from current value to newValue
+#       geneIDToBeChanged = child.coords['Gene'].values[loc-1]
+#       newCDFValue = randomUtils.random()
+#       newValue = distDict[geneIDToBeChanged].ppf(newCDFValue)
+#       child.values[loc-1] = newValue
+#   return offSprings
 
 def inversionMutator(offSprings, distDict, **kwargs):
   """
