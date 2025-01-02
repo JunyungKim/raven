@@ -98,9 +98,9 @@ def rouletteWheel(population,**kwargs):
                                   coords={'chromosome':np.arange(len(pop_dupRemoved)),
                                           'Gene': pop_expanded.coords['Gene']})
 
-  fitness = pop_dupRemovedXr[:,-1].data
-  fitnessIDX = np.arange(len(fitness))  
-  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)*.2)]] # top 20% of chromosomes in the population will be passed to next iteration.
+  fitnessInPop_dupRemovedXr = pop_dupRemovedXr[:,-1].data
+  fitnessIDX = np.arange(len(fitnessInPop_dupRemovedXr))  
+  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitnessInPop_dupRemovedXr[i])[:math.ceil(len(fitnessInPop_dupRemovedXr)*.2)]] # top 20% of chromosomes in the population will be passed to next iteration.
 
   # remove fitness values in ParentToNextGen
   ParentToNextGen = xr.DataArray(ParentToNextGen.data[:,:-1],
@@ -108,7 +108,7 @@ def rouletteWheel(population,**kwargs):
                                  coords={'chromosome': np.arange(np.shape(ParentToNextGen)[0]),
                                          'Gene': ParentToNextGen.coords['Gene'][:-1]})
 
-  # fitness = kwargs['fitness'].data
+  fitness = np.array([item for sublist in datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data for item in sublist])
   nParents= kwargs['nParents']
   # if nparents = population size then do nothing (whole population are parents)
   if nParents == pop.shape[0]:
