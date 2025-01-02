@@ -129,9 +129,8 @@ def feasibleFirst(rlz,**kwargs):
       if kwargs['constraintNum'] == 0 or np.all(g.data[ind, :]>=0):
         fit=(a[i]*data[ind])
       else:
-        fit = a[i]*worstObj
         for constInd,_ in enumerate(g['Constraint'].data):
-          fit = a[i]*fit + objPen[objVar[i]][constInd]*(max(0,-1*g.data[ind, constInd])) #NOTE: objPen[objVar[i]][constInd] is "objective & Constraint specific penalty."
+          fit = a[i]*data[ind] + objPen[objVar[i]][constInd]*(max(0,-1*g.data[ind, constInd])) #NOTE: objPen[objVar[i]][constInd] is "objective & Constraint specific penalty."
       if len(kwargs['type']) == 1:
         fitness.append(-1*fit)
       else:

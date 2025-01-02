@@ -88,13 +88,25 @@ def rouletteWheel(population,**kwargs):
   # Updated Code in order to make selectedParent Contain the fitness values. 
   # Arguments
   pop = population
-  fitness = np.array([item for sublist in datasetToDataArray(kwargs['fitness'], list(kwargs['fitness'].keys())).data for item in sublist])
-  fitnessIDX = np.arange(len(fitness))
-  ParentToNextGen = pop[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)/5)]] # top 20% of chromosomes in the population will be passed to next iteration.
-
   fitnessXarray = kwargs['fitness'].to_dataarray().squeeze(dim='variable')
   fitnessXarray_expanded = fitnessXarray.expand_dims(dim={'Gene': ['fitness']})
   pop_expanded = xr.concat([pop, fitnessXarray_expanded], dim='Gene')
+  
+  pop_dupRemoved = np.array([list(tupl) for tupl in {tuple(item) for item in pop_expanded.data }])
+  pop_dupRemovedXr = xr.DataArray(pop_dupRemoved,
+                                  dims=['chromosome','Gene'],
+                                  coords={'chromosome':np.arange(len(pop_dupRemoved)),
+                                          'Gene': pop_expanded.coords['Gene']})
+
+  fitness = pop_dupRemovedXr[:,-1].data
+  fitnessIDX = np.arange(len(fitness))  
+  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitness[i])[:math.ceil(len(fitness)*.2)]] # top 20% of chromosomes in the population will be passed to next iteration.
+
+  # remove fitness values in ParentToNextGen
+  ParentToNextGen = xr.DataArray(ParentToNextGen.data[:,:-1],
+                                 dims=['chromosome','Gene'],
+                                 coords={'chromosome': np.arange(np.shape(ParentToNextGen)[0]),
+                                         'Gene': ParentToNextGen.coords['Gene'][:-1]})
 
   # fitness = kwargs['fitness'].data
   nParents= kwargs['nParents']
@@ -105,9 +117,9 @@ def rouletteWheel(population,**kwargs):
     raise IOError('Number of parents is greater than population size')
   # begin the roulette selection algorithm
   selectedParentforXr = xr.DataArray(np.zeros((nParents,np.shape(pop_expanded)[1])),
-                                dims=['chromosome','Gene'],
-                                coords={'chromosome':np.arange(nParents),
-                                        'Gene': pop_expanded.coords['Gene']})
+                                     dims=['chromosome','Gene'],
+                                     coords={'chromosome':np.arange(nParents),
+                                             'Gene': pop_expanded.coords['Gene']})
   # imagine a wheel that is partitioned according to the selection probabilities
 
   for i in range(nParents):
