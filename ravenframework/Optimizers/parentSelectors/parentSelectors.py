@@ -86,7 +86,6 @@ def rouletteWheel(population,**kwargs):
   # return selectedParent
 
   # Updated Code in order to make selectedParent Contain the fitness values. 
-  # Arguments
   pop = population
   fitnessXarray = kwargs['fitness'].to_dataarray().squeeze(dim='variable')
   fitnessXarray_expanded = fitnessXarray.expand_dims(dim={'Gene': ['fitness']})
@@ -100,7 +99,7 @@ def rouletteWheel(population,**kwargs):
 
   fitnessInPop_dupRemovedXr = pop_dupRemovedXr[:,-1].data
   fitnessIDX = np.arange(len(fitnessInPop_dupRemovedXr))  
-  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitnessInPop_dupRemovedXr[i])[:math.ceil(len(fitnessInPop_dupRemovedXr)*.2)]] # top 20% of chromosomes in the population will be passed to next iteration.
+  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitnessInPop_dupRemovedXr[i])[:math.ceil(len(fitnessInPop_dupRemovedXr)*.05)]] # top 5% of chromosomes in the population will be passed to next iteration.
 
   # remove fitness values in ParentToNextGen
   ParentToNextGen = xr.DataArray(ParentToNextGen.data[:,:-1],

@@ -171,6 +171,12 @@ def twoPointsCrossover(parents, **kwargs):
     children[index+1] = children2
     index = index + 2
 
+  # remove fitness values in children
+  children = xr.DataArray(children.data[:,:-1],
+                          dims=['chromosome','Gene'],
+                          coords={'chromosome': np.arange(np.shape(children)[0]),
+                                  'Gene': parents.coords['Gene'][:-1]})
+
   return children
 
 def getLinearCrossoverProbability(iter, limit):
