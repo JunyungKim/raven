@@ -99,7 +99,7 @@ def rouletteWheel(population,**kwargs):
 
   fitnessInPop_dupRemovedXr = pop_dupRemovedXr[:,-1].data
   fitnessIDX = np.arange(len(fitnessInPop_dupRemovedXr))  
-  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitnessInPop_dupRemovedXr[i])[:math.ceil(len(fitnessInPop_dupRemovedXr)*.05)]] # top 5% of chromosomes in the population will be passed to next iteration.
+  ParentToNextGen = pop_dupRemovedXr[sorted(fitnessIDX, reverse=True, key=lambda i: fitnessInPop_dupRemovedXr[i])[:math.ceil(len(fitnessInPop_dupRemovedXr)*.01)]] # top 1% of chromosomes in the population will be passed to next iteration.
 
   # remove fitness values in ParentToNextGen
   ParentToNextGen = xr.DataArray(ParentToNextGen.data[:,:-1],
